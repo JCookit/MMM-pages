@@ -18,6 +18,7 @@ Module.register('MMM-pages', {
     rotationDelay: 10000,
     homePage: 0,
     useLockString: true,
+    pageChangeMode: 'normal', // 'normal' or 'shuffle'
   },
 
   /**
@@ -31,6 +32,16 @@ Module.register('MMM-pages', {
   },
 
   /**
+   * Shuffles the shuffledPageIndices array using Fisher-Yates algorithm.
+   */
+  shufflePages() {
+    for (let i = this.shuffledPageIndices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.shuffledPageIndices[i], this.shuffledPageIndices[j]] = [this.shuffledPageIndices[j], this.shuffledPageIndices[i]];
+    }
+  },
+
+  /**
    * Pseudo-constructor for our module. Makes sure that values aren't negative,
    * and sets the default current page to 0.
    */
@@ -41,6 +52,18 @@ Module.register('MMM-pages', {
     }
     this.curPage = this.config.homePage;
     this.rotationPaused = false;
+
+    // Initialize shuffle-related variables
+    if (this.config.pageChangeMode === 'shuffle') {
+      this.shuffledPageIndices = [];
+      for (let i = 0; i < this.config.modules.length; i++) {
+        this.shuffledPageIndices.push(i);
+      }
+      this.shufflePages();
+      this.currentShuffledPage = 0;
+      // Set curPage to the first shuffled page
+      this.curPage = this.shuffledPageIndices[this.currentShuffledPage];
+    }
 
     // Compatibility
     if (this.config.excludes.length) {
@@ -156,6 +179,23 @@ Module.register('MMM-pages', {
       Log.warn(`[MMM-pages] ${amt} is not a number!`);
     }
 
+    // Handle shuffle mode
+    if (this.config.pageChangeMode === 'shuffle') {
+      // Only use shuffle logic for increment by 1 (normal auto-rotation or PAGE_INCREMENT)
+      if ((typeof amt === 'number' && amt === 1) || (typeof amt !== 'number' && typeof fallback === 'number' && fallback === 1)) {
+        this.currentShuffledPage++;
+        if (this.currentShuffledPage >= this.shuffledPageIndices.length) {
+          // Re-shuffle the array and reset to beginning
+          this.shufflePages();
+          this.currentShuffledPage = 0;
+        }
+        this.curPage = this.shuffledPageIndices[this.currentShuffledPage];
+        return;
+      }
+      // For any other amount (specified amt or fallback other than 1), fall through to normal logic
+    }
+
+    // Normal mode logic (or shuffle mode with non-1 increment)
     if (typeof amt === 'number' && !Number.isNaN(amt)) {
       this.curPage = this.mod(
         this.curPage + amt,

@@ -164,6 +164,38 @@ You have to add the class name to the config of the module you want to show on a
     ...
 ```
 
+### Shuffle mode configuration
+
+You can enable shuffle mode to randomize the page order during automatic rotation:
+
+```js
+    {
+        module: "MMM-pages",
+        config: {
+            pageChangeMode: "shuffle",       // Enable shuffle mode
+            timings: {
+                default: 10000,              // Each page shows for 10 seconds
+            },
+            modules: [
+                ["newsfeed"],                // page 0
+                ["calendar", "compliments"], // page 1
+                ["currentweather"],          // page 2
+                ["MMM-Spotify"]              // page 3
+            ],
+            fixed: [
+                "clock",
+                "MMM-page-indicator"
+            ]
+        }
+    },
+```
+
+In shuffle mode:
+- Pages are displayed in random order during automatic rotation
+- When all pages have been shown, the order is shuffled again
+- Manual page changes (using notifications with specific page numbers) still work normally
+- Only affects automatic page increments (PAGE_INCREMENT with no payload or payload of 1)
+
 ### Configuration options
 
 | Option              | Type                       | Default Value            | Description |
@@ -172,6 +204,7 @@ You have to add the class name to the config of the module you want to show on a
 | `fixed`             | `[String...]`              | `["MMM-page-indicator"]` | Which modules should show up all the time. |
 | `excludes`          | *NA*                       | *NA*                     | **Deprecated**. Use `fixed` instead. |
 | `hiddenPages`       | `{String: [String...]...}` | `{}`                     | An Object defining special `hiddenPages` which are not available on the normal page rotation and only accessible via a notification. Modules defined in `fixed` are ignored and need to be also added if you wish to have them on any hidden page. |
+| `pageChangeMode`    | `String`                   | `"normal"`               | Controls how pages are changed during automatic rotation. Set to `"normal"` for sequential page changes (default behavior), or `"shuffle"` to randomize the page order. When set to `"shuffle"`, pages will be shown in random order, and when all pages have been displayed, the order is shuffled again. Manual page changes (via notifications with specific amounts) still work normally even in shuffle mode. |
 | `animationTime`     | `int`                      | `1000`                   | Fading animation time. Set to `0` for instant change. Value is in milliseconds (1 second = 1000 milliseconds). |
 | `rotationTime`      | *NA*                       | *NA*                     | **Deprecated**. Use `timings` instead. |
 | `timings`           | `object`                   | `{ default: 0 }`         | An object whose keys define the rotation time of the pages in milliseconds. <br>Example, where each page is 3 seconds, except page 3 which is 20 seconds:<br>`{ default: 3000, 2: 20000 }`<br>If a page is not defined, it will use the `default` value. <br>You can also specify timeouts for hidden pages by using the hidden page name as key (e.g., `"admin": 30000` will automatically return from the "admin" hidden page after 30 seconds). <br> *Note:* Remember that the numbering starts at 0, so the first page is `0`, the second page is `1`, and so forth. |
